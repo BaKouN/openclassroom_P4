@@ -8,7 +8,7 @@ class Player:
         # self.national_id = national_id
         
         self.last_name = kwargs.get("last_name", None)
-        if not self.last_name or type(self.last_name) != str:
+        if not self.last_name or not isinstance(self.last_name, str):
             print(
                 f"Last name should be defined as a string, currently {self.last_name} ({type(self.last_name)})"
             )
