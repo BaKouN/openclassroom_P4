@@ -76,7 +76,12 @@ class TournamentController:
         tournament = self.view.select_tournament(active_tournaments)
         if tournament is None:
             return
-        self._play_round(tournament)
+
+        unfinished_round = self._get_unfinished_round(tournament)
+        if unfinished_round:
+            self._resume_round(tournament, unfinished_round)
+        else:
+            self._play_round(tournament)
 
     def _play_round(self, tournament):
         round_number = tournament.current_round_number + 1
@@ -93,33 +98,65 @@ class TournamentController:
 
         for player1, player2 in pairs:
             match = Match(player1, player2)
-            self.view.display_match_result_prompt(match)
-            player1_score, player2_score = self.view.get_match_result()
-            match.set_result(player1_score, player2_score)
             new_round.add_match(match)
 
-        new_round.finish()
-        tournament.add_round(new_round)
+        tournament.rounds.append(new_round)
         self._save_tournaments()
 
-        self.view.display_round_info(new_round)
+        self._play_unfinished_matches(tournament, new_round)
+
+    def _play_unfinished_matches(self, tournament, round_instance):
+        for match in round_instance.matches:
+            if not match.is_played():
+                self.view.display_match_result_prompt(match)
+                player1_score, player2_score = (
+                    self.view.get_match_result()
+                )
+                match.set_result(player1_score, player2_score)
+                self._save_tournaments()
+
+        round_instance.finish()
+        tournament.current_round_number = len([
+            r for r in tournament.rounds if r.is_finished()
+        ])
+        self._save_tournaments()
+
+        self.view.display_round_info(round_instance)
 
         if tournament.is_finished():
             standings = self._get_standings(tournament)
             self.view.display_tournament_results(tournament, standings)
         else:
+            next_round = tournament.current_round_number + 1
             self.view.display_message(
-                f"{round_name} termine. "
-                f"Round {round_number + 1}/{tournament.number_of_rounds} a suivre."
+                f"{round_instance.name} termine. "
+                f"Round {next_round}/{tournament.number_of_rounds} "
+                f"a suivre."
             )
+
+    def _get_unfinished_round(self, tournament):
+        for round_instance in tournament.rounds:
+            if not round_instance.is_finished():
+                return round_instance
+        return None
+
+    def _resume_round(self, tournament, unfinished_round):
+        played = sum(
+            1 for m in unfinished_round.matches
+            if m.is_played()
+        )
+        total = len(unfinished_round.matches)
+        self.view.display_message(
+            f"Reprise de {unfinished_round.name} "
+            f"({played}/{total} matchs joues)."
+        )
+        self._play_unfinished_matches(tournament, unfinished_round)
 
     def _generate_pairs(self, tournament):
         players = list(tournament.players)
 
-        if tournament.current_round_number == 0:
-            random.shuffle(players)
-        else:
-            random.shuffle(players)
+        random.shuffle(players)
+        if tournament.current_round_number > 0:
             players.sort(
                 key=lambda player: self._get_player_score(
                     tournament, player
@@ -155,6 +192,8 @@ class TournamentController:
             if round_instance.exempt_player_id == player.national_id:
                 score += 1
             for match in round_instance.matches:
+                if not match.is_played():
+                    continue
                 if match.player1.national_id == player.national_id:
                     score += match.player1_score
                 elif match.player2.national_id == player.national_id:
