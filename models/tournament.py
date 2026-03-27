@@ -6,12 +6,15 @@ class Tournament:
 
     DEFAULT_NUMBER_OF_ROUNDS = 4
 
-    def __init__(self, name, location, start_date, end_date, description=""):
+    def __init__(self, name, location, start_date, end_date,
+                 description="", number_of_rounds=None):
         self.name = name
         self.location = location
         self.start_date = start_date
         self.end_date = end_date
-        self.number_of_rounds = self.DEFAULT_NUMBER_OF_ROUNDS
+        self.number_of_rounds = (
+            number_of_rounds or self.DEFAULT_NUMBER_OF_ROUNDS
+        )
         self.current_round_number = 0
         self.rounds = []
         self.players = []
