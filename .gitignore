@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+
+# Virtual environment
+venv/
+.venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Data (optionnel - on peut vouloir versionner les exemples)
+# data/
+
+# flake8 rapport (genere, mais on le versionne pour le livrable)
+# flake8_rapport/
