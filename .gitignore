@@ -20,8 +20,8 @@ env/
 .DS_Store
 Thumbs.db
 
-# Data (optionnel - on peut vouloir versionner les exemples)
-# data/
+# Data (donnees personnelles, pas versionnees)
+data/
 
 # flake8 rapport (genere, mais on le versionne pour le livrable)
 # flake8_rapport/
