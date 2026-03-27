@@ -53,15 +53,22 @@ class TournamentView:
 
     def select_players_for_tournament(self, players):
         self.display_available_players(players)
-        selected_ids = input(
-            "\nEntrez les numeros des joueurs "
-            "(separes par des virgules) : "
-        )
-        indices = [
-            int(number.strip()) - 1
-            for number in selected_ids.split(",")
-        ]
-        return [players[index] for index in indices]
+        while True:
+            selected_ids = input(
+                "\nEntrez les numeros de la liste "
+                "(ex: 1,2,3) : "
+            )
+            try:
+                indices = [
+                    int(number.strip()) - 1
+                    for number in selected_ids.split(",")
+                ]
+                selected = [players[index] for index in indices]
+                if selected:
+                    return selected
+                print("Selectionnez au moins un joueur.")
+            except (ValueError, IndexError):
+                print("Saisie invalide. Utilisez les numeros de la liste.")
 
     def display_match_result_prompt(self, match):
         print(f"\n{match.player1} vs {match.player2}")
