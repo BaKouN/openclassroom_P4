@@ -1,6 +1,5 @@
 from models.player import Player
 from views.player_view import PlayerView
-from views.menu_view import MenuView
 from utils.data_manager import load_data, save_data
 
 
@@ -12,7 +11,6 @@ class PlayerController:
 
     def __init__(self):
         self.view = PlayerView()
-        self.menu_view = MenuView()
         self.players = self._load_players()
 
     def _load_players(self):
@@ -25,8 +23,7 @@ class PlayerController:
 
     def run(self):
         while True:
-            self.view.display_player_menu()
-            choice = self.menu_view.get_user_choice(3)
+            choice = self.view.get_player_menu_choice()
             if choice == 1:
                 self.add_player()
             elif choice == 2:

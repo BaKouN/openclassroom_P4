@@ -20,8 +20,7 @@ class MainController:
 
     def run(self):
         while True:
-            self.menu_view.display_main_menu()
-            choice = self.menu_view.get_user_choice(4)
+            choice = self.menu_view.get_main_menu_choice()
             if choice == 1:
                 self.player_controller.run()
             elif choice == 2:
@@ -29,5 +28,5 @@ class MainController:
             elif choice == 3:
                 self.report_controller.run()
             elif choice == 4:
-                print("\nMerci et a bientot !")
+                self.menu_view.display_goodbye()
                 break
