@@ -9,6 +9,7 @@ class Round:
     def __init__(self, name):
         self.name = name
         self.matches = []
+        self.exempt_player_id = None
         self.start_datetime = datetime.now().isoformat()
         self.end_datetime = None
 
@@ -29,6 +30,7 @@ class Round:
         return {
             "name": self.name,
             "matches": [match.to_dict() for match in self.matches],
+            "exempt_player_id": self.exempt_player_id,
             "start_datetime": self.start_datetime,
             "end_datetime": self.end_datetime,
         }
@@ -38,6 +40,7 @@ class Round:
         round_instance = cls(data["name"])
         round_instance.start_datetime = data["start_datetime"]
         round_instance.end_datetime = data["end_datetime"]
+        round_instance.exempt_player_id = data.get("exempt_player_id")
         for match_data in data["matches"]:
             match = Match.from_dict(match_data, players)
             round_instance.matches.append(match)
