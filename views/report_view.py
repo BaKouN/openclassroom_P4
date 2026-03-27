@@ -1,74 +1,168 @@
+import questionary
+from questionary import Choice
+from rich.console import Console
+from rich.panel import Panel
+from rich.table import Table
+
+console = Console()
+
+INSTRUCTION_SELECT = "(Fleches pour naviguer)"
+
+
 class ReportView:
     """Gere l'affichage des rapports."""
 
-    def display_report_menu(self):
-        print("\n=== Rapports ===\n")
-        print("1. Tous les joueurs (alphabetique)")
-        print("2. Tous les tournois")
-        print("3. Detail d'un tournoi (nom et dates)")
-        print("4. Joueurs d'un tournoi (alphabetique)")
-        print("5. Tours et matchs d'un tournoi")
-        print("6. Retour")
+    def get_report_menu_choice(self):
+        console.print()
+        console.print(
+            "[bold yellow]--- Rapports ---[/bold yellow]"
+        )
+        return questionary.select(
+            "Quel rapport ?",
+            choices=[
+                Choice(
+                    "Tous les joueurs (alphabetique)", value=1
+                ),
+                Choice("Tous les tournois", value=2),
+                Choice("Detail d'un tournoi", value=3),
+                Choice("Joueurs d'un tournoi", value=4),
+                Choice(
+                    "Tours et matchs d'un tournoi", value=5
+                ),
+                Choice("Retour", value=6),
+            ],
+            instruction=INSTRUCTION_SELECT,
+        ).ask()
 
     def display_all_players(self, players):
-        print("\n=== Tous les joueurs ===\n")
         if not players:
-            print("  Aucun joueur enregistre.")
+            console.print(
+                "\n[yellow]Aucun joueur enregistre.[/yellow]"
+            )
             return
+        table = Table(title="Tous les joueurs", style="cyan")
+        table.add_column("Nom", style="bold")
+        table.add_column("Prenom")
+        table.add_column("ID National", style="dim")
         for player in players:
-            print(f"  {player.last_name}, {player.first_name}"
-                  f" ({player.national_id})")
+            table.add_row(
+                player.last_name,
+                player.first_name,
+                player.national_id,
+            )
+        console.print()
+        console.print(table)
 
     def display_all_tournaments(self, tournaments):
-        print("\n=== Tous les tournois ===\n")
         if not tournaments:
-            print("  Aucun tournoi enregistre.")
+            console.print(
+                "\n[yellow]Aucun tournoi enregistre.[/yellow]"
+            )
             return
+        table = Table(title="Tous les tournois", style="cyan")
+        table.add_column("Nom", style="bold")
+        table.add_column("Lieu")
+        table.add_column("Debut")
+        table.add_column("Fin")
+        table.add_column("Tours", justify="center")
         for tournament in tournaments:
-            print(f"  {tournament}")
+            table.add_row(
+                tournament.name,
+                tournament.location,
+                tournament.start_date,
+                tournament.end_date,
+                f"{tournament.current_round_number}"
+                f"/{tournament.number_of_rounds}",
+            )
+        console.print()
+        console.print(table)
 
     def display_tournament_details(self, tournament):
-        print(f"\n=== {tournament.name} ===\n")
-        print(f"  Lieu       : {tournament.location}")
-        print(f"  Debut      : {tournament.start_date}")
-        print(f"  Fin        : {tournament.end_date}")
-        print(f"  Tours      : {tournament.current_round_number}"
-              f"/{tournament.number_of_rounds}")
-        print(f"  Description: {tournament.description}")
+        console.print()
+        table = Table(
+            title=tournament.name,
+            style="cyan",
+            show_header=False,
+        )
+        table.add_column("Champ", style="bold")
+        table.add_column("Valeur")
+        table.add_row("Lieu", tournament.location)
+        table.add_row("Debut", tournament.start_date)
+        table.add_row("Fin", tournament.end_date)
+        table.add_row(
+            "Tours",
+            f"{tournament.current_round_number}"
+            f"/{tournament.number_of_rounds}",
+        )
+        table.add_row("Description", tournament.description)
+        console.print(table)
 
     def display_tournament_players(self, tournament, players):
-        print(f"\n=== Joueurs de {tournament.name} ===\n")
         if not players:
-            print("  Aucun joueur inscrit.")
+            console.print(
+                "\n[yellow]Aucun joueur inscrit.[/yellow]"
+            )
             return
+        table = Table(
+            title=f"Joueurs de {tournament.name}",
+            style="cyan",
+        )
+        table.add_column("Nom", style="bold")
+        table.add_column("Prenom")
+        table.add_column("ID National", style="dim")
         for player in players:
-            print(f"  {player.last_name}, {player.first_name}"
-                  f" ({player.national_id})")
+            table.add_row(
+                player.last_name,
+                player.first_name,
+                player.national_id,
+            )
+        console.print()
+        console.print(table)
 
     def display_tournament_rounds(self, tournament):
-        print(f"\n=== Tours de {tournament.name} ===\n")
         if not tournament.rounds:
-            print("  Aucun tour joue.")
+            console.print(
+                "\n[yellow]Aucun tour joue.[/yellow]"
+            )
             return
+        console.print()
+        console.print(
+            Panel(
+                f"Tours de {tournament.name}",
+                style="bold magenta",
+                expand=False,
+            )
+        )
         for round_instance in tournament.rounds:
-            status = "Termine" if round_instance.is_finished() else "En cours"
-            print(f"  --- {round_instance.name} ({status}) ---")
-            print(f"  Debut : {round_instance.start_datetime}")
+            status = (
+                "[green]Termine[/green]"
+                if round_instance.is_finished()
+                else "[yellow]En cours[/yellow]"
+            )
+            console.print(
+                f"\n  [bold]{round_instance.name}[/bold]"
+                f" ({status})"
+            )
+            console.print(
+                f"  Debut : {round_instance.start_datetime}"
+            )
             if round_instance.end_datetime:
-                print(f"  Fin   : {round_instance.end_datetime}")
+                console.print(
+                    f"  Fin   : {round_instance.end_datetime}"
+                )
             for match in round_instance.matches:
-                print(f"    {match}")
-            print()
+                console.print(f"    {match}")
 
     def select_tournament(self, tournaments):
         if not tournaments:
-            print("\nAucun tournoi enregistre.")
+            console.print(
+                "\n[yellow]Aucun tournoi enregistre.[/yellow]"
+            )
             return None
-        print("\n=== Choisir un tournoi ===\n")
-        for index, tournament in enumerate(tournaments, start=1):
-            print(f"  {index}. {tournament}")
-        while True:
-            choice = input("\nNumero du tournoi : ")
-            if choice.isdigit() and 1 <= int(choice) <= len(tournaments):
-                return tournaments[int(choice) - 1]
-            print("Choix invalide.")
+        return questionary.select(
+            "Choisir un tournoi",
+            choices=[
+                Choice(str(t), value=t) for t in tournaments
+            ],
+            instruction=INSTRUCTION_SELECT,
+        ).ask()

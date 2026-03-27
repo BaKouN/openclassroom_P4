@@ -1,104 +1,206 @@
+from datetime import datetime, timedelta
+
+import questionary
+from questionary import Choice
+from rich.console import Console
+from rich.panel import Panel
+from rich.table import Table
+
+console = Console()
+
+INSTRUCTION_SELECT = "(Fleches pour naviguer)"
+INSTRUCTION_CHECKBOX = (
+    "(Fleches + Espace = cocher, Entree = valider)"
+)
+
+
+def _format_date(val):
+    """Accepte JJMMAAAA ou JJ/MM/AAAA, retourne JJ/MM/AAAA."""
+    clean = val.replace("/", "")
+    if len(clean) == 8 and clean.isdigit():
+        return f"{clean[:2]}/{clean[2:4]}/{clean[4:]}"
+    return val
+
+
+def _validate_date(val):
+    formatted = _format_date(val)
+    try:
+        datetime.strptime(formatted, "%d/%m/%Y")
+        return True
+    except ValueError:
+        return "Format: JJ/MM/AAAA ou JJMMAAAA"
+
+
 class TournamentView:
     """Gere l'affichage et la saisie pour les tournois."""
 
-    def display_tournament_menu(self):
-        print("\n=== Gestion des Tournois ===\n")
-        print("1. Creer un tournoi")
-        print("2. Reprendre un tournoi")
-        print("3. Retour")
+    def get_tournament_menu_choice(self):
+        console.print()
+        console.print(
+            "[bold blue]--- Gestion des Tournois ---[/bold blue]"
+        )
+        return questionary.select(
+            "Que voulez-vous faire ?",
+            choices=[
+                Choice("Creer un tournoi", value=1),
+                Choice("Reprendre un tournoi", value=2),
+                Choice("Retour", value=3),
+            ],
+            instruction=INSTRUCTION_SELECT,
+        ).ask()
 
     def get_tournament_info(self):
-        print("\n--- Nouveau tournoi ---\n")
-        name = input("Nom du tournoi : ")
-        location = input("Lieu : ")
-        start_date = input("Date de debut (JJ/MM/AAAA) : ")
-        end_date = input("Date de fin (JJ/MM/AAAA) : ")
-        description = input("Description (optionnel) : ")
-        number_of_rounds = input("Nombre de tours (defaut: 4) : ")
-        if not number_of_rounds:
-            number_of_rounds = 4
-        else:
-            number_of_rounds = int(number_of_rounds)
+        console.print("\n[bold]Nouveau tournoi[/bold]")
+        today = datetime.now()
+        default_start = today.strftime("%d/%m/%Y")
+        default_end = (
+            (today + timedelta(days=7)).strftime("%d/%m/%Y")
+        )
+
+        name = questionary.text("Nom du tournoi :").ask()
+        location = questionary.text("Lieu :").ask()
+        start_date = _format_date(questionary.text(
+            "Date de debut (JJ/MM/AAAA ou JJMMAAAA) :",
+            default=default_start,
+            validate=_validate_date,
+        ).ask())
+        end_date = _format_date(questionary.text(
+            "Date de fin (JJ/MM/AAAA ou JJMMAAAA) :",
+            default=default_end,
+            validate=_validate_date,
+        ).ask())
+        description = questionary.text(
+            "Description (optionnel) :",
+            default="",
+        ).ask()
+        number_of_rounds = questionary.text(
+            "Nombre de tours :",
+            default="4",
+        ).ask()
         return {
             "name": name,
             "location": location,
             "start_date": start_date,
             "end_date": end_date,
             "description": description,
-            "number_of_rounds": number_of_rounds,
+            "number_of_rounds": int(number_of_rounds),
         }
 
-    def display_tournaments(self, tournaments):
-        if not tournaments:
-            print("\nAucun tournoi enregistre.")
-            return
-        print("\n=== Liste des tournois ===\n")
-        for index, tournament in enumerate(tournaments, start=1):
-            print(f"  {index}. {tournament}")
-
     def select_tournament(self, tournaments):
-        self.display_tournaments(tournaments)
         if not tournaments:
+            console.print(
+                "\n[yellow]Aucun tournoi enregistre.[/yellow]"
+            )
             return None
-        while True:
-            choice = input("\nChoisir un tournoi (numero) : ")
-            if choice.isdigit() and 1 <= int(choice) <= len(tournaments):
-                return tournaments[int(choice) - 1]
-            print("Choix invalide.")
-
-    def display_available_players(self, players):
-        print("\n=== Joueurs disponibles ===\n")
-        for index, player in enumerate(players, start=1):
-            print(f"  {index}. {player}")
+        return questionary.select(
+            "Choisir un tournoi",
+            choices=[
+                Choice(str(t), value=t) for t in tournaments
+            ],
+            instruction=INSTRUCTION_SELECT,
+        ).ask()
 
     def select_players_for_tournament(self, players):
-        self.display_available_players(players)
-        while True:
-            selected_ids = input(
-                "\nEntrez les numeros de la liste "
-                "(ex: 1,2,3) : "
+        selected = questionary.checkbox(
+            "Selectionnez les joueurs",
+            choices=[
+                Choice(str(player), value=player)
+                for player in players
+            ],
+            instruction=INSTRUCTION_CHECKBOX,
+        ).ask()
+        while not selected:
+            console.print(
+                "[red]Selectionnez au moins un joueur.[/red]"
             )
-            try:
-                indices = [
-                    int(number.strip()) - 1
-                    for number in selected_ids.split(",")
-                ]
-                selected = [players[index] for index in indices]
-                if selected:
-                    return selected
-                print("Selectionnez au moins un joueur.")
-            except (ValueError, IndexError):
-                print("Saisie invalide. Utilisez les numeros de la liste.")
+            selected = questionary.checkbox(
+                "Selectionnez les joueurs",
+                choices=[
+                    Choice(str(player), value=player)
+                    for player in players
+                ],
+                instruction=INSTRUCTION_CHECKBOX,
+            ).ask()
+        return selected
 
-    def display_match_result_prompt(self, match):
-        print(f"\n{match.player1} vs {match.player2}")
-        print("1. Victoire joueur 1")
-        print("2. Victoire joueur 2")
-        print("3. Match nul")
+    def get_match_result(self, match):
+        console.print(
+            f"\n[bold]{match.player1}[/bold]"
+            f" vs [bold]{match.player2}[/bold]"
+        )
+        return questionary.select(
+            "Resultat",
+            choices=[
+                Choice(
+                    f"Victoire {match.player1.first_name}",
+                    value=(1, 0),
+                ),
+                Choice(
+                    f"Victoire {match.player2.first_name}",
+                    value=(0, 1),
+                ),
+                Choice("Match nul", value=(0.5, 0.5)),
+            ],
+            instruction=INSTRUCTION_SELECT,
+        ).ask()
 
-    def get_match_result(self):
-        while True:
-            choice = input("> ")
-            if choice == "1":
-                return 1, 0
-            elif choice == "2":
-                return 0, 1
-            elif choice == "3":
-                return 0.5, 0.5
-            print("Choix invalide. Entrez 1, 2 ou 3.")
+    def ask_start_tournament(self):
+        return questionary.select(
+            "Lancer le premier round ?",
+            choices=[
+                Choice("Oui", value=True),
+                Choice("Non", value=False),
+            ],
+            instruction=INSTRUCTION_SELECT,
+        ).ask()
+
+    def ask_next_round(self):
+        return questionary.select(
+            "Lancer le round suivant ?",
+            choices=[
+                Choice("Oui", value=True),
+                Choice("Non", value=False),
+            ],
+            instruction=INSTRUCTION_SELECT,
+        ).ask()
 
     def display_round_info(self, round_instance):
-        print(f"\n=== {round_instance.name} ===")
-        print(f"Debut : {round_instance.start_datetime}")
+        console.print()
+        console.print(
+            Panel(
+                round_instance.name,
+                style="bold magenta",
+                expand=False,
+            )
+        )
+        console.print(
+            f"  Debut : {round_instance.start_datetime}"
+        )
         if round_instance.is_finished():
-            print(f"Fin : {round_instance.end_datetime}")
+            console.print(
+                f"  Fin   : {round_instance.end_datetime}"
+            )
         for match in round_instance.matches:
-            print(f"  {match}")
+            console.print(f"  {match}")
 
     def display_tournament_results(self, tournament, standings):
-        print(f"\n=== Resultats : {tournament.name} ===\n")
-        for rank, (player, score) in enumerate(standings, start=1):
-            print(f"  {rank}. {player} - {score} pts")
+        console.print()
+        table = Table(
+            title=f"Resultats : {tournament.name}",
+            style="bold yellow",
+        )
+        table.add_column("Rang", justify="center", style="bold")
+        table.add_column("Joueur")
+        table.add_column(
+            "Score", justify="center", style="cyan"
+        )
+        for rank, (player, score) in enumerate(
+            standings, start=1
+        ):
+            table.add_row(
+                str(rank), str(player), f"{score} pts"
+            )
+        console.print(table)
 
     def display_message(self, message):
-        print(f"\n{message}")
+        console.print(f"\n{message}")

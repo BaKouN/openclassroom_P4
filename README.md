@@ -11,6 +11,14 @@ Developpee dans le cadre du projet 4 du parcours Developpeur d'Application Pytho
 - Sauvegarde automatique en JSON apres chaque action
 - Reprise de tournoi interrompu
 - 5 rapports : joueurs, tournois, details, joueurs par tournoi, tours et matchs
+- Interface terminal interactive (menus navigables, tableaux formates, validation des saisies)
+
+## Technologies
+
+- **Python 3.x**
+- **Rich** : affichage enrichi dans le terminal (tableaux, couleurs, panneaux)
+- **Questionary** : menus interactifs avec navigation au clavier (fleches, checkboxes)
+- **flake8** + **flake8-html** : conformite PEP 8
 
 ## Prerequis
 
