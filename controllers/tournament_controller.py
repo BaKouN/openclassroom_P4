@@ -1,4 +1,3 @@
-import random
 from collections import namedtuple
 from enum import IntEnum
 
@@ -112,7 +111,7 @@ class TournamentController:
         round_name = f"Round {round_number}"
         new_round = Round(round_name)
 
-        pairs, exempt_player = self._generate_pairs(tournament)
+        pairs, exempt_player = tournament.generate_pairs()
 
         if exempt_player:
             new_round.exempt_player_id = exempt_player.national_id
@@ -148,7 +147,7 @@ class TournamentController:
         self.view.display_round_info(round_instance)
 
         if tournament.is_finished():
-            standings = self._get_standings(tournament)
+            standings = tournament.get_standings()
             self.view.display_tournament_results(
                 tournament, standings
             )
@@ -180,73 +179,3 @@ class TournamentController:
         self._play_unfinished_matches(
             tournament, unfinished_round
         )
-
-    def _generate_pairs(self, tournament):
-        players = list(tournament.players)
-
-        random.shuffle(players)
-        if tournament.current_round_number > 0:
-            players.sort(
-                key=lambda player: self._get_player_score(
-                    tournament, player
-                ),
-                reverse=True,
-            )
-
-        already_played = self._get_already_played(tournament)
-        pairs = []
-        available = list(players)
-
-        while len(available) >= 2:
-            player1 = available.pop(0)
-            for i, player2 in enumerate(available):
-                pair = frozenset([
-                    player1.national_id,
-                    player2.national_id,
-                ])
-                if pair not in already_played:
-                    available.pop(i)
-                    pairs.append((player1, player2))
-                    break
-            else:
-                player2 = available.pop(0)
-                pairs.append((player1, player2))
-
-        exempt_player = available[0] if available else None
-        return pairs, exempt_player
-
-    def _get_player_score(self, tournament, player):
-        score = 0
-        for round_instance in tournament.rounds:
-            if (round_instance.exempt_player_id
-                    == player.national_id):
-                score += 1
-            for match in round_instance.matches:
-                if not match.is_played():
-                    continue
-                if (match.player1.national_id
-                        == player.national_id):
-                    score += match.player1_score
-                elif (match.player2.national_id
-                        == player.national_id):
-                    score += match.player2_score
-        return score
-
-    def _get_already_played(self, tournament):
-        played = set()
-        for round_instance in tournament.rounds:
-            for match in round_instance.matches:
-                pair = frozenset([
-                    match.player1.national_id,
-                    match.player2.national_id,
-                ])
-                played.add(pair)
-        return played
-
-    def _get_standings(self, tournament):
-        standings = []
-        for player in tournament.players:
-            score = self._get_player_score(tournament, player)
-            standings.append((player, score))
-        standings.sort(key=lambda item: item[1], reverse=True)
-        return standings

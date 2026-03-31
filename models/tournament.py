@@ -1,3 +1,5 @@
+import random
+
 from models.round import Round
 
 
@@ -29,6 +31,65 @@ class Tournament:
 
     def is_finished(self):
         return self.current_round_number >= self.number_of_rounds
+
+    def _get_player_score(self, player):
+        score = 0
+        for round_instance in self.rounds:
+            if round_instance.exempt_player_id == player.national_id:
+                score += 1
+            for match in round_instance.matches:
+                if not match.is_played():
+                    continue
+                if match.player1.national_id == player.national_id:
+                    score += match.player1_score
+                elif match.player2.national_id == player.national_id:
+                    score += match.player2_score
+        return score
+
+    def _get_already_played(self):
+        return {
+            frozenset([match.player1.national_id, match.player2.national_id])
+            for round_instance in self.rounds
+            for match in round_instance.matches
+        }
+
+    def get_standings(self):
+        standings = [
+            (player, self._get_player_score(player))
+            for player in self.players
+        ]
+        return sorted(standings, key=lambda item: item[1], reverse=True)
+
+    def generate_pairs(self):
+        players = list(self.players)
+        random.shuffle(players)
+        if self.current_round_number > 0:
+            players.sort(
+                key=lambda player: self._get_player_score(player),
+                reverse=True,
+            )
+
+        already_played = self._get_already_played()
+        pairs = []
+        available = list(players)
+
+        while len(available) >= 2:
+            player1 = available.pop(0)
+            for i, player2 in enumerate(available):
+                pair = frozenset([
+                    player1.national_id,
+                    player2.national_id,
+                ])
+                if pair not in already_played:
+                    available.pop(i)
+                    pairs.append((player1, player2))
+                    break
+            else:
+                player2 = available.pop(0)
+                pairs.append((player1, player2))
+
+        exempt_player = available[0] if available else None
+        return pairs, exempt_player
 
     def __str__(self):
         return (
