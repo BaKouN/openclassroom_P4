@@ -9,18 +9,16 @@ console = Console()
 class MenuView:
     """Gere l'affichage des menus et la saisie du choix utilisateur."""
 
-    def get_main_menu_choice(self):
+    def get_menu_choice(self, question, choices):
         console.print()
         console.print(
             Panel("Centre d'Echecs", style="bold cyan", expand=False)
         )
         return questionary.select(
-            "Que voulez-vous faire ?",
+            question,
             choices=[
-                Choice("Gerer les joueurs", value=1),
-                Choice("Gerer les tournois", value=2),
-                Choice("Rapports", value=3),
-                Choice("Quitter", value=4),
+                Choice(title=label, value=value)
+                for value, label in choices
             ],
             instruction="(Fleches pour naviguer)",
         ).ask()

@@ -1,4 +1,6 @@
 import random
+from collections import namedtuple
+from enum import IntEnum
 
 from models.tournament import Tournament
 from models.round import Round
@@ -8,6 +10,16 @@ from utils.data_manager import load_data, save_data
 
 
 TOURNAMENTS_FILE = "data/tournaments.json"
+
+
+class TournamentMenu(IntEnum):
+    """Choix du menu des tournois."""
+    CREATE = 1
+    RESUME = 2
+    EXIT = 3
+
+
+MenuItem = namedtuple("MenuItem", ["value", "label", "action"])
 
 
 class TournamentController:
@@ -32,14 +44,18 @@ class TournamentController:
         save_data(TOURNAMENTS_FILE, tournaments_data)
 
     def run(self):
-        while True:
-            choice = self.view.get_tournament_menu_choice()
-            if choice == 1:
-                self.create_tournament()
-            elif choice == 2:
-                self.resume_tournament()
-            elif choice == 3:
-                break
+        menu = [
+            MenuItem(TournamentMenu.CREATE, "Creer un tournoi", self.create_tournament),
+            MenuItem(TournamentMenu.RESUME, "Reprendre un tournoi", self.resume_tournament),
+            MenuItem(TournamentMenu.EXIT, "Retour", None),
+        ]
+        choices = [(item.value, item.label) for item in menu]
+        actions = {item.value: item.action for item in menu if item.action}
+
+        while (choice := self.view.get_menu_choice(
+            "Que voulez-vous faire ?", choices
+        )) != TournamentMenu.EXIT:
+            actions.get(choice)()
 
     def create_tournament(self):
         tournament_info = self.view.get_tournament_info()

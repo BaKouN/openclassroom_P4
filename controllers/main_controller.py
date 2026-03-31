@@ -1,7 +1,21 @@
+from collections import namedtuple
+from enum import IntEnum
+
 from views.menu_view import MenuView
 from controllers.player_controller import PlayerController
 from controllers.tournament_controller import TournamentController
 from controllers.report_controller import ReportController
+
+
+class MainMenu(IntEnum):
+    """Choix du menu principal."""
+    PLAYERS = 1
+    TOURNAMENTS = 2
+    REPORTS = 3
+    EXIT = 4
+
+
+MenuItem = namedtuple("MenuItem", ["value", "label", "action"])
 
 
 class MainController:
@@ -19,14 +33,18 @@ class MainController:
         )
 
     def run(self):
-        while True:
-            choice = self.menu_view.get_main_menu_choice()
-            if choice == 1:
-                self.player_controller.run()
-            elif choice == 2:
-                self.tournament_controller.run()
-            elif choice == 3:
-                self.report_controller.run()
-            elif choice == 4:
-                self.menu_view.display_goodbye()
-                break
+        menu = [
+            MenuItem(MainMenu.PLAYERS, "Gerer les joueurs", self.player_controller.run),
+            MenuItem(MainMenu.TOURNAMENTS, "Gerer les tournois", self.tournament_controller.run),
+            MenuItem(MainMenu.REPORTS, "Rapports", self.report_controller.run),
+            MenuItem(MainMenu.EXIT, "Quitter", None),
+        ]
+        choices = [(item.value, item.label) for item in menu]
+        actions = {item.value: item.action for item in menu if item.action}
+
+        while (choice := self.menu_view.get_menu_choice(
+            "Que voulez-vous faire ?", choices
+        )) != MainMenu.EXIT:
+            actions.get(choice)()
+
+        self.menu_view.display_goodbye()

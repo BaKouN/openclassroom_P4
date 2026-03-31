@@ -1,4 +1,20 @@
+from collections import namedtuple
+from enum import IntEnum
+
 from views.report_view import ReportView
+
+
+class ReportMenu(IntEnum):
+    """Choix du menu des rapports."""
+    ALL_PLAYERS = 1
+    ALL_TOURNAMENTS = 2
+    TOURNAMENT_DETAILS = 3
+    TOURNAMENT_PLAYERS = 4
+    TOURNAMENT_ROUNDS = 5
+    EXIT = 6
+
+
+MenuItem = namedtuple("MenuItem", ["value", "label", "action"])
 
 
 class ReportController:
@@ -10,20 +26,21 @@ class ReportController:
         self.tournaments = tournaments
 
     def run(self):
-        while True:
-            choice = self.view.get_report_menu_choice()
-            if choice == 1:
-                self.report_all_players()
-            elif choice == 2:
-                self.report_all_tournaments()
-            elif choice == 3:
-                self.report_tournament_details()
-            elif choice == 4:
-                self.report_tournament_players()
-            elif choice == 5:
-                self.report_tournament_rounds()
-            elif choice == 6:
-                break
+        menu = [
+            MenuItem(ReportMenu.ALL_PLAYERS, "Tous les joueurs (alphabetique)", self.report_all_players),
+            MenuItem(ReportMenu.ALL_TOURNAMENTS, "Tous les tournois", self.report_all_tournaments),
+            MenuItem(ReportMenu.TOURNAMENT_DETAILS, "Detail d'un tournoi", self.report_tournament_details),
+            MenuItem(ReportMenu.TOURNAMENT_PLAYERS, "Joueurs d'un tournoi", self.report_tournament_players),
+            MenuItem(ReportMenu.TOURNAMENT_ROUNDS, "Tours et matchs d'un tournoi", self.report_tournament_rounds),
+            MenuItem(ReportMenu.EXIT, "Retour", None),
+        ]
+        choices = [(item.value, item.label) for item in menu]
+        actions = {item.value: item.action for item in menu if item.action}
+
+        while (choice := self.view.get_menu_choice(
+            "Quel rapport ?", choices
+        )) != ReportMenu.EXIT:
+            actions.get(choice)()
 
     def report_all_players(self):
         sorted_players = sorted(

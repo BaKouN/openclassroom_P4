@@ -34,17 +34,16 @@ def _validate_date(val):
 class TournamentView:
     """Gere l'affichage et la saisie pour les tournois."""
 
-    def get_tournament_menu_choice(self):
+    def get_menu_choice(self, question, choices):
         console.print()
         console.print(
             "[bold blue]--- Gestion des Tournois ---[/bold blue]"
         )
         return questionary.select(
-            "Que voulez-vous faire ?",
+            question,
             choices=[
-                Choice("Creer un tournoi", value=1),
-                Choice("Reprendre un tournoi", value=2),
-                Choice("Retour", value=3),
+                Choice(title=label, value=value)
+                for value, label in choices
             ],
             instruction=INSTRUCTION_SELECT,
         ).ask()

@@ -18,15 +18,16 @@ def _validate_national_id(val):
 class PlayerView:
     """Gere l'affichage et la saisie pour les joueurs."""
 
-    def get_player_menu_choice(self):
+    def get_menu_choice(self, question, choices):
         console.print()
-        console.print("[bold green]--- Gestion des Joueurs ---[/bold green]")
+        console.print(
+            "[bold green]--- Gestion des Joueurs ---[/bold green]"
+        )
         return questionary.select(
-            "Que voulez-vous faire ?",
+            question,
             choices=[
-                Choice("Ajouter un joueur", value=1),
-                Choice("Lister les joueurs", value=2),
-                Choice("Retour", value=3),
+                Choice(title=label, value=value)
+                for value, label in choices
             ],
             instruction="(Fleches pour naviguer)",
         ).ask()

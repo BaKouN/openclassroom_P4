@@ -12,24 +12,16 @@ INSTRUCTION_SELECT = "(Fleches pour naviguer)"
 class ReportView:
     """Gere l'affichage des rapports."""
 
-    def get_report_menu_choice(self):
+    def get_menu_choice(self, question, choices):
         console.print()
         console.print(
             "[bold yellow]--- Rapports ---[/bold yellow]"
         )
         return questionary.select(
-            "Quel rapport ?",
+            question,
             choices=[
-                Choice(
-                    "Tous les joueurs (alphabetique)", value=1
-                ),
-                Choice("Tous les tournois", value=2),
-                Choice("Detail d'un tournoi", value=3),
-                Choice("Joueurs d'un tournoi", value=4),
-                Choice(
-                    "Tours et matchs d'un tournoi", value=5
-                ),
-                Choice("Retour", value=6),
+                Choice(title=label, value=value)
+                for value, label in choices
             ],
             instruction=INSTRUCTION_SELECT,
         ).ask()

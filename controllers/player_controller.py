@@ -1,9 +1,22 @@
+from collections import namedtuple
+from enum import IntEnum
+
 from models.player import Player
 from views.player_view import PlayerView
 from utils.data_manager import load_data, save_data
 
 
 PLAYERS_FILE = "data/players.json"
+
+
+class PlayerMenu(IntEnum):
+    """Choix du menu des joueurs."""
+    ADD_PLAYER = 1
+    LIST_PLAYERS = 2
+    EXIT = 3
+
+
+MenuItem = namedtuple("MenuItem", ["value", "label", "action"])
 
 
 class PlayerController:
@@ -22,14 +35,18 @@ class PlayerController:
         save_data(PLAYERS_FILE, players_data)
 
     def run(self):
-        while True:
-            choice = self.view.get_player_menu_choice()
-            if choice == 1:
-                self.add_player()
-            elif choice == 2:
-                self.list_players()
-            elif choice == 3:
-                break
+        menu = [
+            MenuItem(PlayerMenu.ADD_PLAYER, "Ajouter un joueur", self.add_player),
+            MenuItem(PlayerMenu.LIST_PLAYERS, "Lister les joueurs", self.list_players),
+            MenuItem(PlayerMenu.EXIT, "Retour", None),
+        ]
+        choices = [(item.value, item.label) for item in menu]
+        actions = {item.value: item.action for item in menu if item.action}
+
+        while (choice := self.view.get_menu_choice(
+            "Que voulez-vous faire ?", choices
+        )) != PlayerMenu.EXIT:
+            actions.get(choice)()
 
     def add_player(self):
         player_info = self.view.get_player_info()
