@@ -1,5 +1,13 @@
+from enum import IntEnum
 from views.report_view import ReportView
 
+class ReportControllerChoice(IntEnum):
+    REPORT_ALL_PLAYERS = 1
+    REPORT_ALL_TOURNAMENTS = 2
+    REPORT_TOURNAMENT_DETAILS = 3
+    REPORT_TOURNAMENT_PLAYERS = 4
+    REPORT_TOURNAMENT_ROUNDS = 5
+    EXIT = 6
 
 class ReportController:
     """Gere la logique des rapports."""
@@ -10,20 +18,18 @@ class ReportController:
         self.tournaments = tournaments
 
     def run(self):
-        while True:
-            choice = self.view.get_report_menu_choice()
-            if choice == 1:
-                self.report_all_players()
-            elif choice == 2:
-                self.report_all_tournaments()
-            elif choice == 3:
-                self.report_tournament_details()
-            elif choice == 4:
-                self.report_tournament_players()
-            elif choice == 5:
-                self.report_tournament_rounds()
-            elif choice == 6:
-                break
+        options = (
+            (ReportControllerChoice.REPORT_ALL_PLAYERS, lambda _: self.report_all_players()),
+            (ReportControllerChoice.REPORT_ALL_TOURNAMENTS, lambda _: self.report_all_tournaments()),
+            (ReportControllerChoice.REPORT_TOURNAMENT_DETAILS, lambda _: self.report_tournament_details()),
+            (ReportControllerChoice.REPORT_TOURNAMENT_PLAYERS, lambda _: self.report_tournament_players()),
+            (ReportControllerChoice.REPORT_TOURNAMENT_ROUNDS, lambda _: self.report_tournament_rounds()),
+        )
+
+        while (choice := self.view.get_report_menu_choice()) != ReportControllerChoice.EXIT:
+            for option in options:
+                if choice == option[0]:
+                    option[1](self)
 
     def report_all_players(self):
         sorted_players = sorted(
