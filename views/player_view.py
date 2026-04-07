@@ -1,4 +1,5 @@
 import re
+from datetime import datetime
 
 import questionary
 
@@ -7,6 +8,23 @@ from rich.console import Console
 from rich.table import Table
 
 console = Console()
+
+
+def _format_birth_date(val):
+    """Accepte JJMMAAAA ou JJ/MM/AAAA, retourne JJ/MM/AAAA."""
+    clean = val.replace("/", "")
+    if len(clean) == 8 and clean.isdigit():
+        return f"{clean[:2]}/{clean[2:4]}/{clean[4:]}"
+    return val
+
+
+def _validate_birth_date(val):
+    formatted = _format_birth_date(val)
+    try:
+        datetime.strptime(formatted, "%d/%m/%Y")
+        return True
+    except ValueError:
+        return "Format attendu : JJ/MM/AAAA ou JJMMAAAA"
 
 
 def _validate_national_id(val):
@@ -36,10 +54,14 @@ class PlayerView:
         console.print("\n[bold]Nouveau joueur[/bold]")
         last_name = questionary.text("Nom de famille").ask()
         first_name = questionary.text("Prénom").ask()
-        birth_date = questionary.text("Date de naissance").ask()
+        birth_date = _format_birth_date(questionary.text(
+            "Date de naissance (JJ/MM/AAAA ou JJMMAAAA)",
+            validate=_validate_birth_date,
+        ).ask())
         national_id = questionary.text(
             "Identifiant National",
             validate=_validate_national_id,
+            filter=str.upper,
         ).ask()
 
         return {
